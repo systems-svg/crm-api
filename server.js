@@ -5,23 +5,39 @@ const bodyParser = require("body-parser");
 const app = express();
 app.use(bodyParser.json());
 
-// TEST ROUTE
-app.get("/", (req, res) => {
-  res.send("CRM API is running");
-});
-
-// MYSQL CONNECTION
+// ======================
+// SAFE DATABASE CONNECT
+// ======================
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port: 3306
+  database: process.env.DB_NAME
 });
 
-// INSERT LEAD
+db.connect(function(err) {
+  if (err) {
+    console.log("DB connection failed (non-fatal):", err.message);
+  } else {
+    console.log("DB connected successfully");
+  }
+});
+
+// ======================
+// HEALTH CHECK ROUTE
+// ======================
+app.get("/", (req, res) => {
+  res.send("CRM API is running");
+});
+
+// ======================
+// INSERT LEAD ENDPOINT
+// ======================
 app.post("/insert-lead", (req, res) => {
+
   const d = req.body;
+
+  console.log("Incoming payload:", d);
 
   const sql = `
     INSERT INTO leads 
@@ -43,21 +59,29 @@ app.post("/insert-lead", (req, res) => {
     d.status
   ];
 
-  db.query(sql, values, (err) => {
+  db.query(sql, values, (err, result) => {
+
     if (err) {
-  console.log("MYSQL ERROR:", err);
-  return res.status(500).send(err.sqlMessage || err.message);
-}
-    res.send("Lead inserted");
+      console.log("MYSQL ERROR:", err.message);
+      return res.status(500).json({
+        status: "error",
+        message: err.message
+      });
+    }
+
+    return res.json({
+      status: "success",
+      inserted_id: result.insertId
+    });
+
   });
 });
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Server running");
+// ======================
+// START SERVER
+// ======================
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
-
-app.post("/insert-lead", (req, res) => {
-
-  console.log("RAW BODY:", req.body);
-
-  const d = req.body;
