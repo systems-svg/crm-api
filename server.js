@@ -5,9 +5,9 @@ const bodyParser = require("body-parser");
 const app = express();
 app.use(bodyParser.json());
 
-// ======================
-// SAFE DATABASE CONNECT
-// ======================
+/* ======================
+   DATABASE CONNECTION
+====================== */
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -23,16 +23,31 @@ db.connect(function(err) {
   }
 });
 
-// ======================
-// HEALTH CHECK ROUTE
-// ======================
+/* ======================
+   HEALTH CHECK ROUTE
+====================== */
 app.get("/", (req, res) => {
   res.send("CRM API is running");
 });
 
-// ======================
-// INSERT LEAD ENDPOINT
-// ======================
+/* ======================
+   DATE CLEANER (FIX 1970 ISSUE)
+====================== */
+function cleanDate(value) {
+  if (!value) return null;
+
+  let d = new Date(value);
+
+  if (!isNaN(d.getTime())) {
+    return d.toISOString().slice(0, 19).replace("T", " ");
+  }
+
+  return null;
+}
+
+/* ======================
+   INSERT LEAD ROUTE
+====================== */
 app.post("/insert-lead", (req, res) => {
 
   const d = req.body;
@@ -46,7 +61,7 @@ app.post("/insert-lead", (req, res) => {
   `;
 
   const values = [
-    d.created_at,
+    cleanDate(d.created_at),
     d.lead_id,
     d.customer_name,
     d.customer_phone_no,
@@ -77,12 +92,11 @@ app.post("/insert-lead", (req, res) => {
   });
 });
 
-// ======================
-// START SERVER
-// ======================
+/* ======================
+   START SERVER
+====================== */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log("created_at received:", d.created_at);
 });
