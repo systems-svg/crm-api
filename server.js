@@ -45,9 +45,9 @@ app.post("/insert-lead", (req, res) => {
 
   db.query(sql, values, (err) => {
     if (err) {
-      console.log(err);
-      return res.status(500).send("DB insert error");
-    }
+  console.log("MYSQL ERROR:", err);
+  return res.status(500).send(err.sqlMessage || err.message);
+}
     res.send("Lead inserted");
   });
 });
