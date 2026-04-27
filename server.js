@@ -55,3 +55,9 @@ app.post("/insert-lead", (req, res) => {
 app.listen(process.env.PORT || 3000, () => {
   console.log("Server running");
 });
+
+app.post("/insert-lead", (req, res) => {
+
+  console.log("RAW BODY:", req.body);
+
+  const d = req.body;
